@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>發達點子生成器</title>
+  <style>
+    :root {
+      --bg-color: #050505;
+      --card-bg: #111111;
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --accent: #00ff88; /* 駭客綠，象徵金錢與科技 */
+      --accent-dim: rgba(0, 255, 136, 0.1);
+      --border: #333333;
+    }
+    
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent;}
+    
+    body {
+      background-color: var(--bg-color);
+      background-image: radial-gradient(circle at 50% 0%, #1a2a22 0%, transparent 50%);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text-main);
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 700px;
+      padding-bottom: 40px;
+    }
+
+    .header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
+    .header h1 { font-size: 32px; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: 2px; font-weight: 800; }
+    .header span { color: var(--accent); }
+    .header p { margin: 0; color: var(--text-sub); font-size: 15px; }
+
+    /* 生成器主螢幕 */
+    .generator-screen {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px 25px;
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 255, 136, 0.05);
+    }
+
+    .generator-screen::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .idea-category {
+      font-size: 13px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 15px;
+      display: inline-block;
+      background: var(--accent-dim);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .idea-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 0 0 15px 0;
+      line-height: 1.4;
+    }
+
+    .idea-desc {
+      font-size: 16px;
+      color: var(--text-sub);
+      line-height: 1.7;
+      margin-bottom: 25px;
+      text-align: justify;
+    }
+
+    /* 執行步驟 */
+    .action-steps {
+      background: rgba(0,0,0,0.4);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: left;
+      margin-bottom: 25px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .action-steps h4 { margin: 0 0 10px 0; color: var(--text-main); font-size: 15px; display: flex; align-items: center; gap: 8px;}
+    .action-steps ul { margin: 0; padding-left: 20px; color: #d1d5db; font-size: 14px; line-height: 1.6; }
+    .action-steps li { margin-bottom: 6px; }
+
+    /* 估算數值 */
+    .est-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .metric-box {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+    .metric-label { font-size: 12px; color: var(--text-sub); margin-bottom: 5px; }
+    .metric-val { font-size: 16px; font-weight: bold; color: var(--accent); }
+
+    /* 生成按鈕 */
+    .generate-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      width: 100%;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: 800;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+    }
+    .generate-btn:active { transform: scale(0.96); box-shadow: none; }
+
+    /* 點子過濾器 */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      background: var(--text-main);
+      color: var(--bg-color);
+      border-color: var(--text-main);
+      font-weight: bold;
+    }
+
+    /* 動畫 */
+    .fade-in { animation: fadeIn 0.4s ease-in-out; }
+    @keyframes fadeIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <div class="header">
+    <h1>財富煉金術 <span>2.0</span></h1>
+    <p>結合你的隱藏技能，發掘下一個收入來源</p>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all')">全領域隨機</button>
+    <button class="filter-btn" onclick="setFilter('tech')">💻 程式與網絡</button>
+    <button class="filter-btn" onclick="setFilter('content')">📹 機動與內容</button>
+    <button class="filter-btn" onclick="setFilter('data')">📊 數據與套利</button>
+  </div>
+
+  <div class="generator-screen fade-in" id="idea-card">
+    <div class="idea-category" id="cat-label">點擊下方按鈕開始</div>
+    <h2 class="idea-title" id="idea-title">等待接收靈感...</h2>
+    <p class="idea-desc" id="idea-desc">系統已載入多套基於香港環境、低啟動成本及特定硬技能的商業模式。準備好發掘你的專屬開源計畫了嗎？</p>
+    
+    <div class="action-steps" id="action-steps" style="display: none;">
+      <h4>🎯 行動指南 (Action Plan)</h4>
+      <ul id="action-list"></ul>
+    </div>
+
+    <div class="est-metrics" id="metrics-area" style="display: none;">
+      <div class="metric-box">
+        <div class="metric-label">預估啟動資金</div>
+        <div class="metric-val" id="val-cost">--</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">潛在月收入增長</div>
+        <div class="metric-val" id="val-return">--</div>
+      </div>
+    </div>
+
+    <button class="generate-btn" onclick="generateIdea()">💡 幫我諗計 (Generate Idea)</button>
+  </div>
+
+</div>
+
+<script>
+  // 高度具體且可執行的財富點子資料庫
+  const ideasDB = [
+    {
+      category: 'tech',
+      catLabel: '💻 程式與自動化',
+      title: '開發輕量級自動化網頁小工具 (SaaS)',
+      desc: '利用 Google Apps Script、HTML 與 JavaScript 的開發經驗，鎖定生活中的痛點（如分帳計算、旅行開支追蹤、特定預約系統）。這類工具不需要昂貴的伺服器，利用瀏覽器本地存儲即可運行，非常適合做成免費但附帶廣告，或小額贊助（Buy me a coffee）的輕量級產品。',
+      actions: [
+        "1. 盤點過去為自己寫過的小工具（如計數機、抽籤、編更表）。",
+        "2. 將介面優化至手機友善（Mobile-first）。",
+        "3. 在各大論壇或 Facebook 群組免費發布，測試流量並收集反饋。"
+      ],
+      cost: "極低 ($0 - $100/月)",
+      return: "$500 - $3,000+ (視乎流量)"
+    },
+    {
+      category: 'content',
+      catLabel: '📹 機動與內容創作',
+      title: '沉浸式第一人稱 MotoVlog 頻道',
+      desc: '香港具備獨特的城市街景。運用 Insta360 全景運動相機結合電單車日常（穿梭市區、假日遊車河、甚至是送遞過程的趣事），製作極具沉浸感的第一人稱短影音。這類影片在 YouTube Shorts 或 TikTok 上極易跨越語言障礙，吸引全球流量，進而接洽車廠或改裝配件（如排氣管、頭盔）贊助。',
+      actions: [
+        "1. 研究合法的相機安裝位置，確保行車安全。",
+        "2. 每次出車順便錄影，重點剪輯 30-60 秒的高對比/視覺衝擊短片。",
+        "3. 在社交媒體加上標籤（#MotoVlog, #HKRider），建立個人品牌 IP。"
+      ],
+      cost: "現有設備 (沉沒成本已付)",
+      return: "長期累積，上限極高"
+    },
+    {
+      category: 'data',
+      catLabel: '📊 數據與分析套利',
+      title: '結構化賠率數據分析與預測模型',
+      desc: '如果你熟練掌握一套數據分析框架（例如追蹤水位波動、亞洲盤口讓球變化的「雷達分析法」），這代表你具備高度的數據敏感度。與其單純下注承受本金風險，不如將這套結構化邏輯轉化為「付費內容」，或者應用於加密貨幣、股票市場的短期波動分析。',
+      actions: [
+        "1. 將你的覆盤紀錄與勝率數據進行系統化整理。",
+        "2. 設立 Patreon 或 Substack，撰寫深度的賽前數據分析報告。",
+        "3. 將「賭博」轉化為「提供數據顧問服務」，賺取穩定的訂閱費。"
+      ],
+      cost: "純腦力與時間",
+      return: "$2,000 - $10,000+"
+    },
+    {
+      category: 'tech',
+      catLabel: '🛡️ 隱私網絡與架設顧問',
+      title: '客製化翻牆與私有 VPN 節點架設',
+      desc: '具備 VLESS-REALITY、Clash 及 Raspberry Pi 微型電腦設定經驗是一項極具價值的硬技能。許多初創小店、個人工作室或需要經常往返內地的商務人士，都有高度的網絡私隱與穩定連線需求，但缺乏技術能力。你可以提供「連工包料」的私人節點架設服務。',
+      actions: [
+        "1. 打包一個標準化的硬體+軟體方案（如：買一部路由器幫設定好全部）。",
+        "2. 定價策略：一次性設定費 + 每年的節點維護費。",
+        "3. 透過身邊有需要的朋友開始，靠口碑擴展客源。"
+      ],
+      cost: "$500 - $1,000 (硬體預支)",
+      return: "$1,500/單 (高利潤)"
+    },
+    {
+      category: 'data',
+      catLabel: '📦 小眾市場套利',
+      title: '特殊興趣配件的跨境倒賣與改裝',
+      desc: '針對特定的小眾興趣（例如爆旋陀螺競技零件、電單車特定型號的改裝喉）。一般玩家通常不熟悉海外網購或不知如何配搭。你可以利用資訊差，從海外批量低價購入稀有配件，重新配置成「即戰力/競技套裝」，在 Carousell 等平台高價轉售。',
+      actions: [
+        "1. 鎖定一個你極度熟悉的興趣領域，找出市場上缺貨或難買的零件。",
+        "2. 從日拍、淘寶或海外代理批量入貨，降低單件運費。",
+        "3. 提供「專業配搭」的附加價值（例如：已調校好最佳配置），賺取溢價。"
+      ],
+      cost: "$1,000 - $3,000 (入貨資金)",
+      return: "30% - 60% 利潤率"
+    },
+    {
+      category: 'content',
+      catLabel: '🏍️ 機動與物流',
+      title: '高時效物流路線規劃與接單優化',
+      desc: '在從事外賣送遞等機動性工作時，真正的利潤來自於「路線最佳化」與「減少空車率」。將你對香港街道、泊車位及交通黑點的記憶轉化為優勢，專攻繁忙時間的高單價急件，或過渡至更穩定的車隊/巡邏管理職位，將「時間換取金錢」的效率極大化。',
+      actions: [
+        "1. 記錄每週不同時段的接單熱區，建立自己的「熱度預測地圖」。",
+        "2. 善用多平台同步接單技巧，確保去程與回程皆有收入。",
+        "3. 將前線駕駛經驗寫入履歷，向上應徵物流車隊的調度或巡邏主管職位。"
+      ],
+      cost: "日常油費與保養",
+      return: "時薪提升 20% - 40%"
+    }
+  ];
+
+  let currentFilter = 'all';
+
+  // 設定過濾器
+  function setFilter(category) {
+    currentFilter = category;
+    
+    // 更新按鈕外觀
+    const btns = document.querySelectorAll('.filter-btn');
+    btns.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+
+  // 隨機抽取點子
+  function generateIdea() {
+    const card = document.getElementById('idea-card');
+    
+    // 重置動畫
+    card.classList.remove('fade-in');
+    void card.offsetWidth; // 觸發重繪
+    card.classList.add('fade-in');
+
+    // 篩選資料庫
+    let filteredDB = ideasDB;
+    if (currentFilter !== 'all') {
+      filteredDB = ideasDB.filter(idea => idea.category === currentFilter);
+    }
+
+    // 隨機抽取
+    const randomIndex = Math.floor(Math.random() * filteredDB.length);
+    const idea = filteredDB[randomIndex];
+
+    // 更新介面
+    document.getElementById('cat-label').innerText = idea.catLabel;
+    document.getElementById('idea-title').innerText = idea.title;
+    document.getElementById('idea-desc').innerText = idea.desc;
+    
+    // 更新行動步驟
+    const actionList = document.getElementById('action-list');
+    actionList.innerHTML = '';
+    idea.actions.forEach(action => {
+      const li = document.createElement('li');
+      li.innerText = action;
+      actionList.appendChild(li);
+    });
+    
+    // 顯示隱藏區域
+    document.getElementById('action-steps').style.display = 'block';
+    document.getElementById('metrics-area').style.display = 'grid';
+
+    // 更新數值
+    document.getElementById('val-cost').innerText = idea.cost;
+    document.getElementById('val-return').innerText = idea.return;
+  }
+</script>
+
+</body>
+</html>
